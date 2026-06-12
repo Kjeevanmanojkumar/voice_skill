@@ -1,0 +1,144 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export type User = {
+  id: string;
+  email: string;
+  created_at: string;
+};
+
+export type UserProfile = {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  preferred_voice_speed: number;
+  voice_feedback_enabled: boolean;
+  high_contrast_mode: boolean;
+  screen_reader_mode: boolean;
+  language_preference: string;
+  total_xp: number;
+  current_streak: number;
+  longest_streak: number;
+  last_activity: string;
+  created_at: string;
+};
+
+export type Skill = {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  icon: string;
+  difficulty_level: number;
+  total_missions: number;
+  estimated_hours: number;
+};
+
+export type Mission = {
+  id: string;
+  skill_id: string;
+  title: string;
+  description: string;
+  scenario: string;
+  voice_instructions: string[];
+  steps: string[];
+  materials: string[];
+  safety_notes: string[];
+  difficulty: number;
+  duration_minutes: number;
+  points: number;
+  order_index: number;
+  is_active: boolean;
+};
+
+export type Assessment = {
+  id: string;
+  skill_id: string;
+  title: string;
+  description: string;
+  questions: AssessmentQuestion[];
+  passing_score: number;
+  time_limit_minutes: number;
+  max_attempts: number;
+};
+
+export type AssessmentQuestion = {
+  q: string;
+  options: string[];
+  correct: number;
+};
+
+export type UserProgress = {
+  id: string;
+  user_id: string;
+  skill_id: string;
+  total_points: number;
+  missions_completed: number;
+  assessments_passed: number;
+  current_level: number;
+  mastery_percentage: number;
+  time_spent_minutes: number;
+  last_accessed: string;
+};
+
+export type MissionAttempt = {
+  id: string;
+  user_id: string;
+  mission_id: string;
+  status: 'started' | 'completed' | 'failed' | 'abandoned';
+  score: number;
+  voice_commands_used: number;
+  correct_commands: number;
+  time_taken_seconds: number;
+  feedback: string | null;
+  completed_at: string | null;
+};
+
+export type Certificate = {
+  id: string;
+  user_id: string;
+  skill_id: string;
+  certificate_number: string;
+  issued_at: string;
+  competency_level: string;
+  score_achieved: number;
+  verification_code: string;
+  is_valid: boolean;
+};
+
+export type VoiceSession = {
+  id: string;
+  user_id: string;
+  mission_id: string | null;
+  session_type: 'navigation' | 'mission' | 'assessment' | 'training';
+  commands: VoiceCommand[];
+  total_commands: number;
+  successful_commands: number;
+  average_confidence: number;
+  duration_seconds: number;
+  ended_at?: string;
+};
+
+export type VoiceCommand = {
+  text: string;
+  timestamp: number;
+  confidence: number;
+  recognized: boolean;
+  action?: string;
+};
+
+export type LearningPath = {
+  id: string;
+  user_id: string;
+  skill_id: string;
+  recommended_missions: string[];
+  weak_areas: string[];
+  strengths: string[];
+  recommended_difficulty: number;
+  ai_recommendations: Record<string, unknown>;
+};

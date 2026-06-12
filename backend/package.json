@@ -1,0 +1,9 @@
+{
+  "name": "voice-skill-learning-backend-proxy",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "cd .. && npm install && npm run build && mkdir -p backend/dist && cp -R dist/. backend/dist/"
+  }
+}
