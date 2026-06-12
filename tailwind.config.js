@@ -1,148 +1,125 @@
-import { supabase } from '../lib/supabase';
-import type { Mission, UserProgress, LearningPath } from '../lib/supabase';
-
-interface AIAnalysis {
-  weakAreas: string[];
-  strengths: string[];
-  recommendedMissions: string[];
-  recommendedDifficulty: number;
-  personalizedMessage: string;
-}
-
-export async function generateLearningPath(
-  skillId: string,
-  missions: Mission[],
-  progress: UserProgress | null
-): Promise<LearningPath | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const existingPath = await getExistingLearningPath(skillId);
-  if (existingPath) return existingPath;
-
-  const analysis = analyzePerformance(missions, progress);
-
-  const { data, error } = await supabase
-    .from('learning_paths')
-    .insert({
-      user_id: user.id,
-      skill_id: skillId,
-      recommended_missions: analysis.recommendedMissions,
-      weak_areas: analysis.weakAreas,
-      strengths: analysis.strengths,
-      recommended_difficulty: analysis.recommendedDifficulty,
-      ai_recommendations: { message: analysis.personalizedMessage },
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getExistingLearningPath(skillId: string): Promise<LearningPath | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from('learning_paths')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('skill_id', skillId)
-    .single();
-
-  if (error && error.code !== 'PGRST116') throw error;
-  return data;
-}
-
-export function analyzePerformance(
-  missions: Mission[],
-  progress: UserProgress | null
-): AIAnalysis {
-  if (!progress || progress.missions_completed === 0) {
-    return {
-      weakAreas: [],
-      strengths: [],
-      recommendedMissions: missions.slice(0, 3).map((m) => m.id),
-      recommendedDifficulty: 1,
-      personalizedMessage: 'Welcome! Start with beginner missions to build your foundation in this skill.',
-    };
-  }
-
-  const completionRate = progress.missions_completed / missions.length;
-  const mastery = progress.mastery_percentage;
-
-  const weakAreas: string[] = [];
-  const strengths: string[] = [];
-
-  if (mastery < 30) {
-    weakAreas.push('Foundation concepts');
-    weakAreas.push('Basic procedures');
-  } else if (mastery < 60) {
-    weakAreas.push('Intermediate techniques');
-    strengths.push('Basic concepts');
-  } else if (mastery < 80) {
-    weakAreas.push('Advanced troubleshooting');
-    strengths.push('Core procedures');
-    strengths.push('Safety protocols');
-  } else {
-    strengths.push('Comprehensive skill mastery');
-    strengths.push('Problem-solving');
-    strengths.push('Procedure execution');
-  }
-
-  let recommendedDifficulty = 2;
-  if (mastery < 40) recommendedDifficulty = 1;
-  else if (mastery < 60) recommendedDifficulty = 2;
-  else if (mastery < 80) recommendedDifficulty = 3;
-  else recommendedDifficulty = 4;
-
-  const incompleteMissions = missions.filter((_, idx) => idx >= progress.missions_completed);
-
-  const recommendedMissions = incompleteMissions
-    .filter((m) => m.difficulty <= recommendedDifficulty)
-    .slice(0, 3)
-    .map((m) => m.id);
-
-  let personalizedMessage = '';
-  if (mastery < 30) {
-    personalizedMessage = "You're just getting started. Focus on understanding the basics and completing beginner missions. Consistency is key!";
-  } else if (mastery < 60) {
-    personalizedMessage = "Good progress! You've mastered the basics. Now focus on intermediate missions to strengthen your skills.";
-  } else if (mastery < 80) {
-    personalizedMessage = "You're doing great! Continue with advanced missions to deepen your expertise and prepare for certification.";
-  } else {
-    personalizedMessage = "Excellent work! You're nearing mastery. Consider taking the assessment to earn your certificate.";
-  }
-
-  return {
-    weakAreas,
-    strengths,
-    recommendedMissions,
-    recommendedDifficulty,
-    personalizedMessage,
-  };
-}
-
-export async function getPersonalizedRecommendations(
-  skillId: string
-): Promise<AIAnalysis | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: missions } = await supabase
-    .from('missions')
-    .select('*')
-    .eq('skill_id', skillId)
-    .eq('is_active', true)
-    .order('order_index');
-
-  const { data: progress } = await supabase
-    .from('user_progress')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('skill_id', skillId)
-    .single();
-
-  return analyzePerformance(missions || [], progress);
-}
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+        },
+        secondary: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+        accent: {
+          50: '#fdf4ff',
+          100: '#fae8ff',
+          200: '#f5d0fe',
+          300: '#f0abfc',
+          400: '#e879f9',
+          500: '#d946ef',
+          600: '#c026d3',
+          700: '#a21caf',
+          800: '#86198f',
+          900: '#701a75',
+        },
+        success: {
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+        },
+        warning: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'glass': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'glass-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        'glass-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        'glow': '0 0 20px rgba(14, 165, 233, 0.3)',
+        'glow-lg': '0 0 40px rgba(14, 165, 233, 0.4)',
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'slide-up': 'slideUp 0.5s ease-out',
+        'slide-down': 'slideDown 0.3s ease-out',
+        'scale-in': 'scaleIn 0.3s ease-out',
+        'pulse-slow': 'pulse 3s ease-in-out infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(-10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        glow: {
+          '0%': { boxShadow: '0 0 20px rgba(14, 165, 233, 0.3)' },
+          '100%': { boxShadow: '0 0 40px rgba(14, 165, 233, 0.6)' },
+        },
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+    },
+  },
+  plugins: [],
+};

@@ -1,222 +1,201 @@
--- Skills table: Vocational skill categories
-CREATE TABLE skills (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  description TEXT NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('electrical', 'healthcare', 'carpentry', 'computer_hardware')),
-  icon TEXT NOT NULL,
-  difficulty_level INTEGER DEFAULT 1 CHECK (difficulty_level BETWEEN 1 AND 5),
-  total_missions INTEGER DEFAULT 0,
-  estimated_hours INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+# VoiceSkill - Voice-Controlled Vocational Learning Platform
 
--- Missions table: Learning tasks for each skill
-CREATE TABLE missions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  scenario TEXT NOT NULL,
-  voice_instructions JSONB NOT NULL DEFAULT '[]',
-  steps JSONB NOT NULL DEFAULT '[]',
-  materials JSONB DEFAULT '[]',
-  safety_notes TEXT[],
-  difficulty INTEGER DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 5),
-  duration_minutes INTEGER DEFAULT 15,
-  points INTEGER DEFAULT 100,
-  order_index INTEGER DEFAULT 0,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+**Smart India Hackathon 2024 - Problem Statement 1779**
 
--- User progress tracking
-CREATE TABLE user_progress (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-  total_points INTEGER DEFAULT 0,
-  missions_completed INTEGER DEFAULT 0,
-  assessments_passed INTEGER DEFAULT 0,
-  current_level INTEGER DEFAULT 1,
-  mastery_percentage DECIMAL(5,2) DEFAULT 0,
-  time_spent_minutes INTEGER DEFAULT 0,
-  last_accessed TIMESTAMPTZ DEFAULT NOW(),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, skill_id)
-);
+A comprehensive voice-controlled learning platform where learners acquire vocational skills through interactive game-based simulations.
 
--- Mission attempts
-CREATE TABLE mission_attempts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  mission_id UUID REFERENCES missions(id) ON DELETE CASCADE,
-  status TEXT CHECK (status IN ('started', 'completed', 'failed', 'abandoned')),
-  score INTEGER DEFAULT 0,
-  voice_commands_used INTEGER DEFAULT 0,
-  correct_commands INTEGER DEFAULT 0,
-  time_taken_seconds INTEGER DEFAULT 0,
-  feedback TEXT,
-  completed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+## Features
 
--- Assessments table
-CREATE TABLE assessments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  questions JSONB NOT NULL DEFAULT '[]',
-  passing_score INTEGER DEFAULT 70,
-  time_limit_minutes INTEGER DEFAULT 30,
-  max_attempts INTEGER DEFAULT 3,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+### Voice-Controlled Learning Arena
+- Speech recognition for hands-free navigation
+- Voice commands for mission interaction
+- Voice feedback and audio instructions
+- Accessibility-first design
 
--- Assessment attempts
-CREATE TABLE assessment_attempts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  assessment_id UUID REFERENCES assessments(id) ON DELETE CASCADE,
-  answers JSONB NOT NULL DEFAULT '{}',
-  score INTEGER DEFAULT 0,
-  passed BOOLEAN DEFAULT false,
-  time_taken_seconds INTEGER DEFAULT 0,
-  attempted_at TIMESTAMPTZ DEFAULT NOW(),
-  completed_at TIMESTAMPTZ
-);
+### Vocational Skill Simulations
+Four skill tracks with interactive missions:
 
--- Certificates table
-CREATE TABLE certificates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-  certificate_number TEXT UNIQUE NOT NULL,
-  issued_at TIMESTAMPTZ DEFAULT NOW(),
-  competency_level TEXT NOT NULL,
-  score_achieved INTEGER NOT NULL,
-  verification_code TEXT NOT NULL,
-  is_valid BOOLEAN DEFAULT true
-);
+1. **Electrical Technician** - Electrical installation, maintenance, and troubleshooting
+2. **Healthcare Assistant** - Patient care, vital signs monitoring, medical procedures
+3. **Carpentry & Woodwork** - Woodworking techniques, furniture making, construction
+4. **Computer Hardware Technician** - PC assembly, troubleshooting, hardware maintenance
 
--- Voice sessions table for tracking voice interactions
-CREATE TABLE voice_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  mission_id UUID REFERENCES missions(id) ON DELETE SET NULL,
-  session_type TEXT CHECK (session_type IN ('navigation', 'mission', 'assessment', 'training')),
-  commands JSONB DEFAULT '[]',
-  total_commands INTEGER DEFAULT 0,
-  successful_commands INTEGER DEFAULT 0,
-  average_confidence DECIMAL(5,2) DEFAULT 0,
-  duration_seconds INTEGER DEFAULT 0,
-  device_info JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  ended_at TIMESTAMPTZ
-);
+### Learning Features
+- Scenario-based interactive missions
+- Step-by-step voice-guided instructions
+- Real-world problem solving simulations
+- Safety protocols and best practices
 
--- Learning paths (AI-generated personalized paths)
-CREATE TABLE learning_paths (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-  recommended_missions UUID[] DEFAULT '{}',
-  weak_areas TEXT[] DEFAULT '{}',
-  strengths TEXT[] DEFAULT '{}',
-  recommended_difficulty INTEGER DEFAULT 1,
-  ai_recommendations JSONB DEFAULT '{}',
-  generated_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, skill_id)
-);
+### Gamification
+- Experience points (XP) system
+- Mission completion tracking
+- Skill mastery levels
+- Learning streaks
 
--- User profiles extended
-CREATE TABLE user_profiles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
-  full_name TEXT,
-  avatar_url TEXT,
-  preferred_voice_speed DECIMAL(2,1) DEFAULT 1.0,
-  voice_feedback_enabled BOOLEAN DEFAULT true,
-  high_contrast_mode BOOLEAN DEFAULT false,
-  screen_reader_mode BOOLEAN DEFAULT false,
-  language_preference TEXT DEFAULT 'en',
-  total_xp INTEGER DEFAULT 0,
-  current_streak INTEGER DEFAULT 0,
-  longest_streak INTEGER DEFAULT 0,
-  last_activity TIMESTAMPTZ DEFAULT NOW(),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+### Certification
+- Competency-based assessments
+- Downloadable certificates (PDF)
+- Skill verification codes
+- Multiple competency levels (Competent, Proficient, Expert)
 
--- Enable RLS on all tables
-ALTER TABLE skills ENABLE ROW LEVEL SECURITY;
-ALTER TABLE missions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
-ALTER TABLE mission_attempts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE assessments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE assessment_attempts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE voice_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE learning_paths ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+### Accessibility
+- Voice-only navigation mode
+- Screen reader compatibility
+- High contrast mode
+- Adjustable voice speed
+- Multiple language support (English, Hindi, Tamil, Telugu, Bengali, Marathi)
 
--- RLS Policies for skills (read-only for authenticated users)
-CREATE POLICY "skills_select" ON skills FOR SELECT TO authenticated USING (true);
+## Tech Stack
 
--- RLS Policies for missions (read-only for authenticated users)
-CREATE POLICY "missions_select" ON missions FOR SELECT TO authenticated USING (true);
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Backend/Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Voice**: Web Speech API (Speech Recognition & Synthesis)
+- **PDF Generation**: jsPDF
+- **Routing**: React Router v6
 
--- RLS Policies for user_progress
-CREATE POLICY "user_progress_select" ON user_progress FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "user_progress_insert" ON user_progress FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "user_progress_update" ON user_progress FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+## Database Schema
 
--- RLS Policies for mission_attempts
-CREATE POLICY "mission_attempts_select" ON mission_attempts FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "mission_attempts_insert" ON mission_attempts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "mission_attempts_update" ON mission_attempts FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+### Tables
+- `skills` - Vocational skill categories
+- `missions` - Learning tasks for each skill
+- `assessments` - Certification tests
+- `user_progress` - Per-skill progress tracking
+- `mission_attempts` - Individual mission attempts
+- `assessment_attempts` - Assessment attempt history
+- `certificates` - Issued certificates
+- `voice_sessions` - Voice interaction logs
+- `learning_paths` - AI-generated personalized paths
+- `user_profiles` - Extended user profile with accessibility settings
 
--- RLS Policies for assessments (read-only for authenticated users)
-CREATE POLICY "assessments_select" ON assessments FOR SELECT TO authenticated USING (true);
+### Row-Level Security (RLS)
+All tables have RLS enabled with policies ensuring users can only access their own data.
 
--- RLS Policies for assessment_attempts
-CREATE POLICY "assessment_attempts_select" ON assessment_attempts FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "assessment_attempts_insert" ON assessment_attempts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "assessment_attempts_update" ON assessment_attempts FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+## Getting Started
 
--- RLS Policies for certificates
-CREATE POLICY "certificates_select" ON certificates FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "certificates_insert" ON certificates FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase account
 
--- RLS Policies for voice_sessions
-CREATE POLICY "voice_sessions_select" ON voice_sessions FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "voice_sessions_insert" ON voice_sessions FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "voice_sessions_update" ON voice_sessions FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+### Installation
 
--- RLS Policies for learning_paths
-CREATE POLICY "learning_paths_select" ON learning_paths FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "learning_paths_insert" ON learning_paths FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "learning_paths_update" ON learning_paths FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+```bash
+# Install dependencies
+npm install
 
--- RLS Policies for user_profiles
-CREATE POLICY "user_profiles_select" ON user_profiles FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "user_profiles_insert" ON user_profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "user_profiles_update" ON user_profiles FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+# Create .env file with your Supabase credentials
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
--- Create indexes for performance
-CREATE INDEX idx_missions_skill_id ON missions(skill_id);
-CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
-CREATE INDEX idx_user_progress_skill_id ON user_progress(skill_id);
-CREATE INDEX idx_mission_attempts_user_id ON mission_attempts(user_id);
-CREATE INDEX idx_mission_attempts_mission_id ON mission_attempts(mission_id);
-CREATE INDEX idx_assessment_attempts_user_id ON assessment_attempts(user_id);
-CREATE INDEX idx_certificates_user_id ON certificates(user_id);
-CREATE INDEX idx_voice_sessions_user_id ON voice_sessions(user_id);
-CREATE INDEX idx_learning_paths_user_id ON learning_paths(user_id);
-CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+### Docker Deployment
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Or build manually
+docker build -t voiceskill .
+docker run -p 3000:80 voiceskill
+```
+
+## Project Structure
+
+```
+src/
+├── components/
+│   └── Layout.tsx          # Main layout wrapper
+├── contexts/
+│   └── AuthContext.tsx     # Authentication context
+├── hooks/
+│   ├── useVoiceRecognition.ts  # Speech recognition hook
+│   └── useSpeechSynthesis.ts   # Text-to-speech hook
+├── lib/
+│   └── supabase.ts         # Supabase client and types
+├── pages/
+│   ├── LandingPage.tsx    # Public landing page
+│   ├── LoginPage.tsx      # Authentication
+│   ├── RegisterPage.tsx   # User registration
+│   ├── DashboardPage.tsx  # Main dashboard
+│   ├── SkillsPage.tsx     # Skill catalog
+│   ├── SkillDetailPage.tsx # Individual skill
+│   ├── VoiceArenaPage.tsx  # Voice command center
+│   ├── MissionPage.tsx    # Interactive mission
+│   ├── MissionsPage.tsx   # Mission list
+│   ├── AssessmentPage.tsx # Assessment taking
+│   ├── AssessmentsPage.tsx # Assessment catalog
+│   ├── ProgressPage.tsx   # Progress dashboard
+│   ├── CertificatesPage.tsx # Certificate list
+│   ├── ProfilePage.tsx    # User settings
+│   └── AdminDashboardPage.tsx # Admin panel
+├── services/
+│   ├── api.ts             # API functions
+│   └── ai.ts              # AI personalization
+├── App.tsx                # Main app component
+└── main.tsx               # Entry point
+```
+
+## Voice Commands
+
+### Navigation Commands
+- "Go to skills" - Navigate to skills page
+- "Go to missions" - Navigate to mission center
+- "Go to assessments" - Navigate to assessments
+- "Go to progress" - View progress dashboard
+- "Go to certificates" - View certificates
+- "Go home" - Return to dashboard
+
+### Mission Commands
+- "Done" / "Complete" / "Next" - Complete current step
+- "Repeat" / "Again" - Repeat last instruction
+- "Back" / "Previous" - Go to previous step
+- "Help" - Show available commands
+
+## API Reference
+
+All API functions are in `src/services/api.ts`:
+
+- `getSkills()` - Get all vocational skills
+- `getMissions(skillId)` - Get missions for a skill
+- `getUserProgress(skillId)` - Get user progress
+- `createMissionAttempt(missionId)` - Start a mission attempt
+- `completeMissionAttempt()` - Submit mission results
+- `createAssessmentAttempt()` - Submit assessment
+- `getCertificates()` - Get user certificates
+
+## AI Personalization
+
+The platform includes AI-powered personalization (`src/services/ai.ts`):
+
+- Analyzes user performance across missions
+- Identifies weak areas and strengths
+- Generates personalized learning paths
+- Recommends appropriate difficulty levels
+- Provides motivational feedback
+
+## Browser Support
+
+Voice recognition requires:
+- Chrome 33+
+- Edge 79+
+- Safari 14.1+ (partial support)
+- Opera 20+
+
+## License
+
+This project is developed for Smart India Hackathon 2024.
+
+## Problem Statement Reference
+
+**Problem Statement 1779**: Voice-Controlled Gaming Tools for Enhanced Learning in the Skill Ecosystem
+
+The platform addresses the need for accessible, hands-free vocational training tools that use voice-controlled gaming approaches to enhance skill acquisition in the vocational education ecosystem.
